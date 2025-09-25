@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { githubDB } from '@/lib/github-db'
+import { requireAdmin, logAdminAction, hasAdminsConfigured, getAdminEmails } from '@/lib/admin-auth'
 
 /**
  * API Unificada de Comunidades - GITHUB EXCLUSIVAMENTE
@@ -110,6 +111,40 @@ export async function POST(request: NextRequest) {
   console.log('➕ [COMMUNITIES] Criando comunidade no GitHub')
   
   try {
+    // Primeiro, obter os dados do body
+    const body = await request.json()
+    
+    // Obter email do usuário do header ou body
+    const userEmail = request.headers.get('x-user-email') || body?.user_email
+    
+    console.log('🔐 [COMMUNITIES] Verificando permissões para:', userEmail)
+    
+    // Verificar se tem admins configurados
+    if (!hasAdminsConfigured()) {
+      console.warn('⚠️ Nenhum administrador configurado - permitindo acesso livre')
+    } else {
+      // Verificar se usuário é admin
+      const authCheck = requireAdmin(userEmail)
+      
+      if (!authCheck.authorized) {
+        return NextResponse.json({
+          success: false,
+          error: 'Acesso Negado',
+          message: authCheck.error,
+          admin_emails: getAdminEmails(),
+          current_user: userEmail,
+          is_admin: false,
+          help: 'Para criar comunidades, faça login com um dos emails de administrador configurados'
+        }, { status: 403 })
+      }
+      
+      // Log da ação administrativa
+      logAdminAction('CREATE_COMMUNITY', userEmail!, {
+        community_name: body?.name,
+        category: body?.category
+      })
+    }
+    
     // Verificar se GitHub está configurado
     if (!githubDB.isConfigured()) {
       console.warn('⚠️ GitHub não configurado')
@@ -129,8 +164,6 @@ export async function POST(request: NextRequest) {
         }
       }, { status: 503 })
     }
-
-    const body = await request.json()
     const { name, description, category, privacy, rules, photo_url, owner, tags } = body
 
     console.log('📝 Dados recebidos para nova comunidade:', {

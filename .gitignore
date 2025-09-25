@@ -43,6 +43,7 @@ next-env.d.ts
 !README.md
 !CHANGELOG.md
 !postimage-api/README.md
+!GITHUB_API_VERCEL.md
 *.js
 !next.config.js
 !postcss.config.js
