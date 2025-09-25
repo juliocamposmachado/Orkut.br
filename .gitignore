@@ -97,4 +97,11 @@ postimage-api/node_modules/
 postimage-api/.env
 postimage-api/.env.local
 
+# Orkut API (esta sessão foi adicionada para proteger segredos e dependências da pasta api/)
+api/.env
+api/.env.local
+api/local-data.json
+api/backup-*.json
+api/node_modules/
+
 .vercel

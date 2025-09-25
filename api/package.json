@@ -1,0 +1,15 @@
+{
+  "name": "orkut-api-github",
+  "version": "1.0.0",
+  "description": "API para atualizar atividades de usuário no GitHub com limite de tentativas",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "@octokit/rest": "^22.0.0",
+    "express": "^4.19.2",
+    "dotenv": "^17.2.1"
+  }
+}
