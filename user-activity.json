@@ -10,7 +10,18 @@
         "community": "Orkut Nostálgico"
       },
       "timestamp": "2025-09-25T02:10:09.486Z"
+    },
+    {
+      "userId": "usuario_teste_1758766420291",
+      "action": "postou",
+      "data": {
+        "timestamp": "2025-09-25T02:13:40.291Z",
+        "title": "Post de teste",
+        "content": "Este é um post de teste da API GitHub!",
+        "community": "Orkut Nostálgico"
+      },
+      "timestamp": "2025-09-25T02:13:40.988Z"
     }
   ],
-  "lastUpdate": "2025-09-25T02:10:09.486Z"
+  "lastUpdate": "2025-09-25T02:13:40.988Z"
 }
