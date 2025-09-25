@@ -1,0 +1,16 @@
+{
+  "activities": [
+    {
+      "userId": "usuario_teste_1758766208815",
+      "action": "postou",
+      "data": {
+        "timestamp": "2025-09-25T02:10:08.815Z",
+        "title": "Post de teste",
+        "content": "Este é um post de teste da API GitHub!",
+        "community": "Orkut Nostálgico"
+      },
+      "timestamp": "2025-09-25T02:10:09.486Z"
+    }
+  ],
+  "lastUpdate": "2025-09-25T02:10:09.486Z"
+}
