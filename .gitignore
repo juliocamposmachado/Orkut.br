@@ -106,3 +106,5 @@ api/backup-*.json
 api/node_modules/
 
 .vercel
+
+build/

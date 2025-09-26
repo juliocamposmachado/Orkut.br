@@ -21,18 +21,72 @@ export async function GET(request: Request) {
     let responseData: any = {}
 
     if (type === 'all' || type === 'friends') {
-      // Buscar amigos
-      const { data: friends, error: friendsError } = await supabase
+      // Buscar amigos - tentar usar a view primeiro, depois query manual
+      let friends = []
+      
+      // Tentar usar a view friends_view
+      const { data: friendsFromView, error: viewError } = await supabase
         .from('friends_view')
         .select('*')
         .order('friendship_date', { ascending: false })
-
-      if (friendsError) {
-        console.error('Erro ao buscar amigos:', friendsError)
-        responseData.friends = []
+      
+      if (!viewError && friendsFromView) {
+        friends = friendsFromView
       } else {
-        responseData.friends = friends || []
+        console.warn('View friends_view não disponível, usando query manual:', viewError)
+        
+        // Fallback: query manual para buscar amigos
+        const { data: friendsManual, error: manualError } = await supabase
+          .from('friendships')
+          .select(`
+            id,
+            requester_id,
+            addressee_id,
+            status,
+            created_at,
+            requester:profiles!friendships_requester_id_fkey (
+              id,
+              display_name,
+              username,
+              photo_url,
+              bio
+            ),
+            addressee:profiles!friendships_addressee_id_fkey (
+              id,
+              display_name,
+              username,
+              photo_url,
+              bio
+            )
+          `)
+          .eq('status', 'accepted')
+          .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`)
+          .order('created_at', { ascending: false })
+        
+        if (!manualError && friendsManual) {
+          // Transformar dados para o formato esperado
+          friends = friendsManual.map(f => {
+            const iAmRequester = f.requester_id === user.id
+            const friend = iAmRequester ? f.addressee : f.requester
+            
+            return {
+              friendship_id: f.id,
+              friend_id: friend.id,
+              friend_display_name: friend.display_name,
+              friend_username: friend.username,
+              friend_photo_url: friend.photo_url,
+              friend_bio: friend.bio,
+              friendship_date: f.created_at,
+              status: f.status
+            }
+          })
+        } else {
+          console.error('Erro ao buscar amigos manualmente:', manualError)
+          friends = []
+        }
       }
+      
+      responseData.friends = friends
     }
 
     if (type === 'all' || type === 'pending_received') {
