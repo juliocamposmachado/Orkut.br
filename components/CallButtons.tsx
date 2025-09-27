@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useWebRTC } from '@/contexts/webrtc-context';
+import { useUnifiedCall, type CallUser } from '@/src/hooks/useUnifiedCall';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Phone, Video, Loader2 } from 'lucide-react';
 
 interface CallButtonsProps {
-  userId: string;
-  userName: string;
+  user: CallUser;
   isOnline?: boolean;
   size?: 'small' | 'medium' | 'large';
   layout?: 'horizontal' | 'vertical';
@@ -14,16 +13,13 @@ interface CallButtonsProps {
 }
 
 export const CallButtons: React.FC<CallButtonsProps> = ({
-  userId,
-  userName,
+  user,
   isOnline = true,
   size = 'medium',
   layout = 'horizontal',
   showLabels = false
 }) => {
-  const { startAudioCall, startVideoCall, callState } = useWebRTC();
-  const isCallActive = callState.isInCall;
-  const [isLoading, setIsLoading] = useState<'audio' | 'video' | null>(null);
+  const { startAudioCall, startVideoCall, isInCall, isConnecting } = useUnifiedCall();
   const [isMobile, setIsMobile] = useState(false);
 
   // Check if device is mobile
@@ -44,32 +40,16 @@ export const CallButtons: React.FC<CallButtonsProps> = ({
   }, [])
 
   const handleAudioCall = async () => {
-    if (isCallActive || !isOnline) return;
-    
-    setIsLoading('audio');
-    try {
-      await startAudioCall(userId);
-    } catch (error) {
-      console.error('Erro ao iniciar chamada de áudio:', error);
-    } finally {
-      setIsLoading(null);
-    }
+    if (isInCall || !isOnline || isConnecting) return;
+    await startAudioCall(user);
   };
 
   const handleVideoCall = async () => {
-    if (isCallActive || !isOnline) return;
-    
-    setIsLoading('video');
-    try {
-      await startVideoCall(userId);
-    } catch (error) {
-      console.error('Erro ao iniciar chamada de vídeo:', error);
-    } finally {
-      setIsLoading(null);
-    }
+    if (isInCall || !isOnline || isConnecting) return;
+    await startVideoCall(user);
   };
 
-  const isDisabled = !isOnline || isCallActive;
+  const isDisabled = !isOnline || isInCall || isConnecting;
 
   // Dynamic sizing - adjust for mobile
   const sizeClasses = {
@@ -93,7 +73,7 @@ export const CallButtons: React.FC<CallButtonsProps> = ({
       {/* Audio Call Button */}
       <Button
         onClick={handleAudioCall}
-        disabled={isDisabled || isLoading !== null}
+        disabled={isDisabled}
         size={isMobile ? 'default' : 'sm'}
         className={`
           ${sizeClasses[size]} 
@@ -120,13 +100,13 @@ export const CallButtons: React.FC<CallButtonsProps> = ({
         }}
         title={
           !isOnline 
-            ? `${userName} está offline`
-            : isCallActive 
+            ? `${user.name || user.display_name} está offline`
+            : isInCall 
             ? 'Chamada em andamento'
-            : `Ligar para ${userName}`
+            : `Ligar para ${user.name || user.display_name}`
         }
       >
-        {isLoading === 'audio' ? (
+        {isConnecting ? (
           <Loader2 className={`${iconSizes[size]} animate-spin text-white`} />
         ) : (
           <Phone className={`${iconSizes[size]} text-white group-hover:text-purple-100`} />
@@ -136,7 +116,7 @@ export const CallButtons: React.FC<CallButtonsProps> = ({
       {/* Video Call Button */}
       <Button
         onClick={handleVideoCall}
-        disabled={isDisabled || isLoading !== null}
+        disabled={isDisabled}
         size={isMobile ? 'default' : 'sm'}
         className={`
           ${sizeClasses[size]} 
@@ -163,13 +143,13 @@ export const CallButtons: React.FC<CallButtonsProps> = ({
         }}
         title={
           !isOnline 
-            ? `${userName} está offline`
-            : isCallActive 
+            ? `${user.name || user.display_name} está offline`
+            : isInCall 
             ? 'Chamada em andamento'
-            : `Videochamada com ${userName}`
+            : `Videochamada com ${user.name || user.display_name}`
         }
       >
-        {isLoading === 'video' ? (
+        {isConnecting ? (
           <Loader2 className={`${iconSizes[size]} animate-spin text-white`} />
         ) : (
           <Video className={`${iconSizes[size]} text-white group-hover:text-pink-100`} />
@@ -203,7 +183,7 @@ export const CallButtons: React.FC<CallButtonsProps> = ({
       )}
 
       {/* Call Active Indicator */}
-      {isCallActive && (
+      {isInCall && (
         <Badge 
           variant="default" 
           className={`bg-green-100 text-green-700 animate-pulse ${

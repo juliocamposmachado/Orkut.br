@@ -4,11 +4,10 @@ import React from 'react'
 import { Phone, Video, PhoneCall } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { useUnifiedCall, type CallUser } from '@/src/hooks/useUnifiedCall'
 
 interface CallButtonsProps {
-  targetUserId: string
-  onAudioCall: (userId: string) => Promise<void>
-  onVideoCall: (userId: string) => Promise<void>
+  targetUser: CallUser
   disabled?: boolean
   size?: 'sm' | 'md' | 'lg'
   variant?: 'default' | 'outline' | 'ghost' | 'compact'
@@ -17,42 +16,29 @@ interface CallButtonsProps {
 }
 
 export const CallButtons: React.FC<CallButtonsProps> = ({
-  targetUserId,
-  onAudioCall,
-  onVideoCall,
+  targetUser,
   disabled = false,
   size = 'md',
   variant = 'default',
   showLabels = false,
   className = ''
 }) => {
-  const [isAudioCalling, setIsAudioCalling] = React.useState(false)
-  const [isVideoCalling, setIsVideoCalling] = React.useState(false)
+  const {
+    startAudioCall,
+    startVideoCall,
+    isConnecting,
+    isCalling,
+    isInCall
+  } = useUnifiedCall()
 
   const handleAudioCall = async () => {
-    if (disabled || isAudioCalling || isVideoCalling) return
-
-    try {
-      setIsAudioCalling(true)
-      await onAudioCall(targetUserId)
-    } catch (error) {
-      console.error('Erro ao iniciar chamada de áudio:', error)
-    } finally {
-      setIsAudioCalling(false)
-    }
+    if (disabled || isConnecting || isInCall) return
+    await startAudioCall(targetUser)
   }
 
   const handleVideoCall = async () => {
-    if (disabled || isAudioCalling || isVideoCalling) return
-
-    try {
-      setIsVideoCalling(true)
-      await onVideoCall(targetUserId)
-    } catch (error) {
-      console.error('Erro ao iniciar chamada de vídeo:', error)
-    } finally {
-      setIsVideoCalling(false)
-    }
+    if (disabled || isConnecting || isInCall) return
+    await startVideoCall(targetUser)
   }
 
   const getButtonSize = () => {
@@ -95,11 +81,11 @@ export const CallButtons: React.FC<CallButtonsProps> = ({
             <TooltipTrigger asChild>
               <Button
                 onClick={handleAudioCall}
-                disabled={disabled || isAudioCalling || isVideoCalling}
+                disabled={disabled || isConnecting || isInCall}
                 variant={getButtonVariant()}
                 className={`${buttonClasses} hover:bg-green-50 hover:text-green-600 dark:hover:bg-green-900/20`}
               >
-                {isAudioCalling ? (
+                {isConnecting || isCalling ? (
                   <PhoneCall className={`${getIconSize()} animate-pulse`} />
                 ) : (
                   <Phone className={getIconSize()} />
@@ -115,11 +101,11 @@ export const CallButtons: React.FC<CallButtonsProps> = ({
             <TooltipTrigger asChild>
               <Button
                 onClick={handleVideoCall}
-                disabled={disabled || isAudioCalling || isVideoCalling}
+                disabled={disabled || isConnecting || isInCall}
                 variant={getButtonVariant()}
                 className={`${buttonClasses} hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20`}
               >
-                {isVideoCalling ? (
+                {isConnecting || isCalling ? (
                   <Video className={`${getIconSize()} animate-pulse`} />
                 ) : (
                   <Video className={getIconSize()} />
@@ -143,7 +129,7 @@ export const CallButtons: React.FC<CallButtonsProps> = ({
           <TooltipTrigger asChild>
             <Button
               onClick={handleAudioCall}
-              disabled={disabled || isAudioCalling || isVideoCalling}
+              disabled={disabled || isConnecting || isInCall}
               variant={getButtonVariant()}
               className={`
                 ${buttonClasses}
@@ -153,20 +139,20 @@ export const CallButtons: React.FC<CallButtonsProps> = ({
                 disabled:bg-gray-400 disabled:border-gray-400
               `}
             >
-              {isAudioCalling ? (
+              {isConnecting || isCalling ? (
                 <PhoneCall className={`${getIconSize()} animate-pulse`} />
               ) : (
                 <Phone className={getIconSize()} />
               )}
               {showLabels && (
                 <span className={`ml-2 ${size === 'sm' ? 'text-xs' : size === 'lg' ? 'text-base' : 'text-sm'}`}>
-                  {isAudioCalling ? 'Chamando...' : 'Áudio'}
+                  {isConnecting || isCalling ? 'Chamando...' : 'Áudio'}
                 </span>
               )}
             </Button>
           </TooltipTrigger>
           <TooltipContent>
-            <p>{isAudioCalling ? 'Iniciando chamada de áudio...' : 'Chamada de áudio'}</p>
+            <p>{isConnecting || isCalling ? 'Iniciando chamada de áudio...' : 'Chamada de áudio'}</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
@@ -177,7 +163,7 @@ export const CallButtons: React.FC<CallButtonsProps> = ({
           <TooltipTrigger asChild>
             <Button
               onClick={handleVideoCall}
-              disabled={disabled || isAudioCalling || isVideoCalling}
+              disabled={disabled || isConnecting || isInCall}
               variant={getButtonVariant()}
               className={`
                 ${buttonClasses}
@@ -187,20 +173,20 @@ export const CallButtons: React.FC<CallButtonsProps> = ({
                 disabled:bg-gray-400 disabled:border-gray-400
               `}
             >
-              {isVideoCalling ? (
+              {isConnecting || isCalling ? (
                 <Video className={`${getIconSize()} animate-pulse`} />
               ) : (
                 <Video className={getIconSize()} />
               )}
               {showLabels && (
                 <span className={`ml-2 ${size === 'sm' ? 'text-xs' : size === 'lg' ? 'text-base' : 'text-sm'}`}>
-                  {isVideoCalling ? 'Chamando...' : 'Vídeo'}
+                  {isConnecting || isCalling ? 'Chamando...' : 'Vídeo'}
                 </span>
               )}
             </Button>
           </TooltipTrigger>
           <TooltipContent>
-            <p>{isVideoCalling ? 'Iniciando chamada de vídeo...' : 'Chamada de vídeo'}</p>
+            <p>{isConnecting || isCalling ? 'Iniciando chamada de vídeo...' : 'Chamada de vídeo'}</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>

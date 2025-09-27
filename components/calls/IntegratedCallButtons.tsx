@@ -4,14 +4,9 @@ import React from 'react'
 import { Phone, Video, PhoneCall } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { useCall } from '@/contexts/CallContext'
+import { useUnifiedCall, type CallUser } from '@/src/hooks/useUnifiedCall'
 
-interface CallUser {
-  id: string
-  name: string
-  photo?: string
-  username?: string
-}
+// CallUser is now imported from useUnifiedCall
 
 interface IntegratedCallButtonsProps {
   user: CallUser
@@ -38,12 +33,13 @@ export const IntegratedCallButtons: React.FC<IntegratedCallButtonsProps> = ({
     isInCall, 
     isConnecting,
     targetUser,
-    currentCall 
-  } = useCall()
+    currentCall,
+    isCalling
+  } = useUnifiedCall()
 
   // Verificar se já está em chamada com este usuário
   const isCallActiveWithUser = isInCall && targetUser?.id === user.id
-  const isCallingThisUser = currentCall?.status === 'calling' && targetUser?.id === user.id
+  const isCallingThisUser = (isCalling || currentCall?.status === 'calling') && targetUser?.id === user.id
   
   const handleAudioCall = async () => {
     if (disabled || isInCall || isConnecting) return
@@ -253,11 +249,12 @@ export const AudioCallButton: React.FC<AudioCallButtonProps> = ({
     isInCall, 
     isConnecting,
     targetUser,
-    currentCall 
-  } = useCall()
+    currentCall,
+    isCalling
+  } = useUnifiedCall()
 
   const isCallActiveWithUser = isInCall && targetUser?.id === user.id
-  const isCallingThisUser = currentCall?.status === 'calling' && targetUser?.id === user.id
+  const isCallingThisUser = (isCalling || currentCall?.status === 'calling') && targetUser?.id === user.id
   
   const handleAudioCall = async () => {
     if (disabled || isInCall || isConnecting) return
