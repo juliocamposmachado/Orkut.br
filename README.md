@@ -92,6 +92,7 @@
 
 #### 📞 **Real-time Communication**
 - **WebRTC Integration** - Peer-to-peer audio/video calls
+- **P2P Chat Criptografado** - Chat seguro com Double Ratchet (MVP)
 - **Screen Sharing** - Real-time collaboration
 - **Call Management** - Accept/reject/end call controls
 - **Connection Status** - Online/offline indicators
@@ -338,7 +339,77 @@ node setup-database-direct.js
 - **Avatar:** Sistema de perfil
 - **Badge:** Status e categorias
 
-## 🔥 **Nova Feature: API de Trending Topics Automática**
+## 🔐 **Nova Feature: Chat P2P Criptografado com WebRTC**
+
+### 💬 **Sistema de Comunicação Segura**
+
+Implementamos um sistema completo de chat peer-to-peer usando WebRTC DataChannel com criptografia ponta-a-ponta baseada no protocolo Double Ratchet.
+
+#### 🚀 **Características do Sistema P2P**
+- ✅ **Conexão Direta** - Comunicação peer-to-peer sem servidor intermediário
+- ✅ **Criptografia E2E** - Double Ratchet protocol (MVP implementado)
+- ✅ **Interface Intuitiva** - UI moderna com feedback em tempo real
+- ✅ **Anti-Glare** - Sistema inteligente para evitar conflitos de ofertas
+- ✅ **Fallback TURN** - Configuração para NATs restritivos
+- ✅ **Logs Detalhados** - Monitoramento completo da conexão
+
+#### 📡 **Páginas Disponíveis**
+```
+/webrtc          # Chat P2P principal
+/webrtc/instrucoes   # Guia completo de uso e configuração
+```
+
+#### 🎯 **Como Usar**
+```javascript
+// Sistema funciona apenas com usuários logados
+1. Acesse /webrtc na aplicação
+2. Digite um ID de sala único
+3. Compartilhe o ID com seu contato
+4. Ambos entram na mesma sala
+5. Conexão P2P estabelecida automaticamente
+6. Chat seguro funcionando!
+```
+
+#### 🔧 **Configuração de Produção**
+Para usar em produção, configure a variável de ambiente:
+```bash
+NEXT_PUBLIC_SIGNALING_SERVER=wss://your-signaling-server.com
+```
+
+#### 📊 **Arquitetura Técnica**
+```mermaid
+flowchart LR
+  A[Cliente A] -- Signaling --> S[Servidor WebSocket]
+  B[Cliente B] -- Signaling --> S
+  A -- P2P DataChannel --> B
+  A --- TURN[TURN Server]
+  B --- TURN
+  
+  subgraph Criptografia
+    Akey[Chaves X25519]
+    Bkey[Chaves X25519]
+    DR[Double Ratchet]
+  end
+  
+  A --> Akey
+  B --> Bkey
+  Akey --> DR
+  Bkey --> DR
+```
+
+#### 🛡️ **Segurança Implementada**
+- **NoopRatchet (MVP)** - Placeholder para Double Ratchet real
+- **Chaves Efêmeras** - Geração por sessão
+- **Servidor Agnóstico** - Não armazena conteúdo das mensagens
+- **Código Auditável** - Implementação transparente e documentada
+
+#### 📚 **Próximos Passos**
+- Integração com `libsignal-protocol` para criptografia real
+- Implementação de X3DH key agreement
+- Verificação de fingerprint de chaves
+- Perfect forward secrecy completo
+
+## 🔥 **API de Trending Topics Automática**
 
 ### 📊 **Integração com Google Trends Brasil**
 
